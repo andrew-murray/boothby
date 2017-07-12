@@ -1,0 +1,23 @@
+
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<html>
+<head><title>Index of test_repo/com.github/jdk</title>
+</head>
+<body>
+<h1>Index of test_repo/com.github/jdk</h1>
+<pre>Name     Last modified      Size</pre><hr/>
+<pre><a href="../">../</a>
+<a href="1.0.223/">1.0.223/</a>  25-May-2015 17:53    -
+<a href="1.0.227/">1.0.227/</a>  08-Jun-2015 16:02    -
+<a href="1.0.228/">1.0.228/</a>  09-Jun-2015 18:36    -
+<a href="1.0.231/">1.0.231/</a>  12-Jun-2015 15:41    -
+<a href="1.0.233/">1.0.233/</a>  23-Jun-2015 15:09    -
+<a href="1.0.238/">1.0.238/</a>  16-Jul-2015 15:33    -
+<a href="1.0.240/">1.0.240/</a>  10-Aug-2015 19:14    -
+<a href="1.0.260/">1.0.260/</a>  31-Aug-2015 17:07    -
+<a href="1.2.48/">1.2.48/</a>   05-Apr-2017 17:36    -
+<a href="15.1.4/">15.1.4/</a>   30-Jun-2015 10:48    -
+<a href="154.1.4/">154.1.4/</a>  14-Dec-2015 10:13    -
+<a href="171.2.1/">171.2.1/</a>  27-Jun-2017 13:50    -
+</pre>
+<hr/><address style="font-size:small;">Artifactory/4.7.7 Server at artifactcentral Port 443</address></body></html>

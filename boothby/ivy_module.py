@@ -228,7 +228,7 @@ class artifact(object):
         )
 
 
-class module(object):
+class ivy_module(object):
     @staticmethod
     def from_file(filename):
         tree = ET.parse(filename)

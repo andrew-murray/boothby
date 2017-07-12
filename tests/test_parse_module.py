@@ -1,4 +1,5 @@
-from ..module import module
+from .import_context import boothby
+from boothby.ivy_module import ivy_module
 import unittest
 import copy
 
@@ -8,7 +9,7 @@ TEST_FILE = "tests/data/official_sample.xml"
 class parse_module_test(unittest.TestCase):
 
     def setUp(self):
-        self.parsed_module = module.from_file(TEST_FILE)
+        self.parsed_module = ivy_module.from_file(TEST_FILE)
 
     def test_configurations(self):
         assert len(self.parsed_module.configurations) == 5
