@@ -8,7 +8,7 @@ TEST_ORG_RESPONSE = "tests/data/artifactory_org_response.txt"
 
 def test_list_modules():
     parser = artifactory_parser()
-    modules = parser.parse_modules_response(open(TEST_ORG_RESPONSE))
+    modules = parser.parse_modules(open(TEST_ORG_RESPONSE))
     expected_modules = [
         u"python",
         u"jdk"
@@ -17,7 +17,7 @@ def test_list_modules():
 
 def test_list_versions():
     parser = artifactory_parser()
-    versions = parser.parse_modules_response(open(TEST_MODULE_RESPONSE))
+    versions = parser.parse_versions(open(TEST_MODULE_RESPONSE))
     expected_versions = [
         u"1.0.223",
         u"1.0.227",

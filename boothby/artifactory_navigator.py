@@ -3,6 +3,7 @@ from urlparse import urljoin
 import abc
 import bs4
 
+
 class navigator(object):
     __metaclass__ = abc.ABCMeta
 
@@ -16,15 +17,23 @@ class navigator(object):
 
 
 class artifactory_parser(object):
-    def parse_versions_response(self, response):
-        pass
 
-    def parse_modules_response(self, response):
+    def parse_links(self, response):
         soup = bs4.BeautifulSoup(response, "lxml")
-        exclude_back = lambda k: ".." not in k["href"]
+
+        def exclude_back(k):
+            return ".." not in k["href"]
+
         links = filter(exclude_back, soup.find("body").find_all("a"))
-        module_names = [ x.text.replace(u"/",u"") for x in links ]
+        module_names = [x.text.replace(u"/", u"") for x in links]
         return module_names
+
+    def parse_versions(self, response):
+        return self.parse_links(response)
+
+    def parse_modules(self, response):
+        return self.parse_links(response)
+
 
 class artifactory_navigator(navigator):
 
@@ -36,7 +45,7 @@ class artifactory_navigator(navigator):
         available_versions = []
         for repo in self.repository_list:
             response = requests.get(urljoin(repo, org, module))
-            available_versions.extend(parser.parse_versions_response(response))
+            available_versions.extend(parser.parse_versions(response))
         return available_versions
 
     def list_available_modules(self, org=None):
@@ -44,5 +53,5 @@ class artifactory_navigator(navigator):
         available_modules = []
         for repo in repo_list(self):
             response = requests.get(urljoin(repo, org))
-            available_modules.extend(parser.parse_modules_response(response))
+            available_modules.extend(parser.parse_modules(response))
         return available_modules
