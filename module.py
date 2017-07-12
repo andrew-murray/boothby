@@ -130,10 +130,6 @@ class dependency(object):
         conf_from_nodes = ";".join(parse_sub_conf(cn) for cn in conf_nodes)
         conf_from_attr = else_default(node.get("conf"), "")
 
-        print "configs"
-        print conf_from_nodes
-        print conf_from_attr
-
         if conf_from_attr and conf_from_nodes:
             conf = conf_from_attr + ";" + conf_from_nodes
         elif not conf_from_nodes and not conf_from_attr:
