@@ -48,10 +48,18 @@ class artifactory_navigator(navigator):
             available_versions.extend(parser.parse_versions(response))
         return available_versions
 
-    def list_available_modules(self, org=None):
+    def list_available_modules(self, org):
         parser = artifactory_parser()
         available_modules = []
-        for repo in repo_list(self):
+        for repo in self.repository_list:
             response = requests.get(urljoin(repo, org))
             available_modules.extend(parser.parse_modules(response))
         return available_modules
+
+    def get_ivy_file(self, org, module, version):
+        for repo in self.repository_list:
+            try:
+                return requests.get(urljoin(repo, org, module, version))
+            except Exception as e:
+                continue
+        raise Exception("Failed to find module")

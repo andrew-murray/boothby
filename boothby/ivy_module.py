@@ -230,8 +230,7 @@ class artifact(object):
 
 class ivy_module(object):
     @staticmethod
-    def from_file(filename):
-        tree = ET.parse(filename)
+    def from_element_tree(tree):
         root = tree.getroot()
         configurations = list(
             conf.from_node(x)
@@ -252,3 +251,13 @@ class ivy_module(object):
             "dependencies": dependencies,
             "publications": publications
         })
+
+    @staticmethod
+    def from_string(text):
+        tree = ET.fromstring(text)
+        return from_element_tree(tree)
+
+    @staticmethod
+    def from_file(filename):
+        tree = ET.parse(filename)
+        return from_element_tree(tree)

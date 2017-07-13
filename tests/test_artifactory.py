@@ -6,6 +6,7 @@ TEST_MODULE_RESPONSE = "tests/data/artifactory_module_response.txt"
 
 TEST_ORG_RESPONSE = "tests/data/artifactory_org_response.txt"
 
+
 def test_list_modules():
     parser = artifactory_parser()
     modules = parser.parse_modules(open(TEST_ORG_RESPONSE))
@@ -14,6 +15,7 @@ def test_list_modules():
         u"jdk"
     ]
     assert modules == expected_modules
+
 
 def test_list_versions():
     parser = artifactory_parser()
