@@ -1,4 +1,5 @@
 import re
+from ivy_module import ivy_module
 
 # let's assume for now, I've been given a file
 
@@ -20,6 +21,7 @@ def rev_fixed(mod):
     return ivy_regex.match(mod) or not any(
         (c in chars) for c in "[]()+*"
     )
+
 
 def build_initial_graph(filename, nav):
     root_module = ivy_module.from_file(filename)
@@ -46,4 +48,5 @@ def build_initial_graph(filename, nav):
         ]
 
         for available_versions, dep in zip(all_versions,deps_to_resolve):
-            print "run"
+            print dep.org + "/" + dep.name
+            print available_versions

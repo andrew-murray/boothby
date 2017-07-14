@@ -1,0 +1,4 @@
+attrdict
+bs4
+keyring
+requests

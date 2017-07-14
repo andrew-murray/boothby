@@ -227,22 +227,23 @@ class artifact(object):
             node.get("url")
         )
 
-
 class ivy_module(object):
     @staticmethod
-    def from_element_tree(tree):
-        root = tree.getroot()
-        configurations = list(
+    def from_element_tree(root):
+        config_section = root.find("configurations")
+        configurations = [
             conf.from_node(x)
-            for x in root.find("configurations").findall("conf")
-        )
+            for x in (config_section.findall("conf") if config_section else [])
+        ]
+        dep_section = root.find("dependencies")
         dependencies = [
             dependency.from_node(x)
-            for x in root.find("dependencies").findall("dependency")
+            for x in (dep_section.findall("dependency") if dep_section else [])
         ]
+        pub_section = root.find("publications")
         publications = [
             artifact.from_node(x)
-            for x in root.find("publications").findall("artifact")
+            for x in (pub_section.findall("artifact") if pub_section else [])
         ]
 
         return AttrDict({
@@ -255,9 +256,9 @@ class ivy_module(object):
     @staticmethod
     def from_string(text):
         tree = ET.fromstring(text)
-        return from_element_tree(tree)
+        return ivy_module.from_element_tree(tree)
 
     @staticmethod
     def from_file(filename):
         tree = ET.parse(filename)
-        return from_element_tree(tree)
+        return ivy_module.from_element_tree(tree.getroot())
