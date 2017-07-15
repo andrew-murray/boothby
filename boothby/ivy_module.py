@@ -125,20 +125,24 @@ class dependency(object):
                 mn.get("name") for mn in sub_mapped_nodes
             )
             mapping_from_attributes = cn.get("mapped")
-            return src + "->" + mapping_from_nodes + else_default(mapping_from_attributes, "")
+            return (
+                src + "->" + mapping_from_nodes
+                + else_default(mapping_from_attributes, "")
+            )
 
-        conf_from_nodes = ";".join(parse_sub_conf(cn) for cn in conf_nodes)
-        conf_from_attr = else_default(node.get("conf"), "")
+
+        conf_from_nodes=";".join(parse_sub_conf(cn) for cn in conf_nodes)
+        conf_from_attr=else_default(node.get("conf"), "")
 
         if conf_from_attr and conf_from_nodes:
-            conf = conf_from_attr + ";" + conf_from_nodes
+            conf=conf_from_attr + ";" + conf_from_nodes
         elif not conf_from_nodes and not conf_from_attr:
-            conf = None
+            conf=None
         else:
             # one of them is valid
             # concat without seperator ...
             # at least one of them will be an empty string
-            conf = conf_from_attr + conf_from_nodes
+            conf=conf_from_attr + conf_from_nodes
 
         # we ignore some features
         # notably artifact, include, exclude
@@ -227,27 +231,42 @@ class artifact(object):
             node.get("url")
         )
 
+
+def parse_info(node):
+    info = AttrDict({
+        "license": node.find("license").attrib,
+        "ivyauthor": node.find("ivyauthor").attrib,
+        "repository": node.find("repository").attrib,
+        "description": node.find("description").attrib
+    })
+    return info + node.attrib
+
+
 class ivy_module(object):
     @staticmethod
     def from_element_tree(root):
+        info = parse_info(root.find("info"))
         config_section = root.find("configurations")
         configurations = [
             conf.from_node(x)
-            for x in (config_section.findall("conf") if config_section else [])
+            for x in (config_section.findall("conf")
+            if config_section is not None else [])
         ]
         dep_section = root.find("dependencies")
         dependencies = [
             dependency.from_node(x)
-            for x in (dep_section.findall("dependency") if dep_section else [])
+            for x in (dep_section.findall("dependency")
+            if dep_section is not None else [])
         ]
         pub_section = root.find("publications")
         publications = [
             artifact.from_node(x)
-            for x in (pub_section.findall("artifact") if pub_section else [])
+            for x in (pub_section.findall("artifact")
+            if pub_section is not None else [])
         ]
 
         return AttrDict({
-            "info": {},
+            "info": info,
             "configurations": configurations,
             "dependencies": dependencies,
             "publications": publications
