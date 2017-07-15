@@ -234,10 +234,10 @@ class artifact(object):
 
 def parse_info(node):
     info = AttrDict({
-        "license": node.find("license").attrib,
-        "ivyauthor": node.find("ivyauthor").attrib,
-        "repository": node.find("repository").attrib,
-        "description": node.find("description").attrib
+        "license": maybe_map(node.find("license"), lambda n : n.attrib),
+        "ivyauthor": maybe_map(node.find("ivyauthor"), lambda n : n.attrib),
+        "repository": maybe_map(node.find("repository"), lambda n : n.attrib),
+        "description": maybe_map(node.find("description"), lambda n : n.attrib)
     })
     return info + node.attrib
 

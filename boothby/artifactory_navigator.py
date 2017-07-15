@@ -4,6 +4,7 @@ import abc
 import bs4
 import getpass
 import keyring
+import os
 
 class navigator(object):
     __metaclass__ = abc.ABCMeta
@@ -67,7 +68,7 @@ class artifactory_navigator(navigator):
                 response = requests.get(urljoin(repo, org) + "/" + module, auth = self.auth)
                 # just throw, if still error
                 response.raise_for_status()
-                
+
             available_versions.extend(parser.parse_versions(response.text))
         return available_versions
 
@@ -83,7 +84,7 @@ class artifactory_navigator(navigator):
                 response.raise_for_status()
             available_modules.extend(parser.parse_modules(response.text))
         return available_modules
-    
+
     def list_available_publications(self, org, module, version):
         parser = artifactory_parser()
         last_exception = None
@@ -97,7 +98,7 @@ class artifactory_navigator(navigator):
                 response.raise_for_status()
             pubs.extend(parser.parse_links( response.text ))
         return pubs
-    
+
     def get_ivy_file(self, org, module, version):
         #FIXME The could not find module case is not very correct
         parser = artifactory_parser()
@@ -114,4 +115,63 @@ class artifactory_navigator(navigator):
             except Exception as e:
                 last_exception = e
                 continue
+        raise Exception( "Couldn't find ivy file with last error being \'" + last_exception + "\'" )
+
+
+class fileset_navigator(navigator):
+
+    def __init__(self, directory_list):
+        self.directory_list = directory_list
+
+    def list_available_versions(self, org, module):
+        """
+            ignores org
+        """
+        # so we're going to lie a bit right now,
+        # because the set of ivy files I have, has the module in the filename,
+        # but not the org
+        available_versions = []
+        sw = "ivy-" + module + "-"
+        for d in self.directory_list:
+            # ivy-module-ver.xml
+            # we presume our version has no dashes,
+            # though it's fine in the module
+            available_versions.extend([
+                os.path.splitext(k)[0].split("-")[-1]
+                for k in os.listdir(d)
+                if k.startswith(sw) and os.path.isfile(os.path.join(d,k))
+            ])
+        return available_versions
+
+    def list_available_modules(self, org):
+        """
+            ignores org
+        """
+        available_modules = set()
+        ivy_starter = "ivy-"
+        for d in self.directory_list:
+            all_things = os.listdir(d)
+            available_modules.update(
+                # this syntax is necessary, because the module can have
+                # dashes, but we disallow it in the version
+                "-".join( os.path.splitext(k)[0].split("-")[1:-1] )
+                for k in os.listdir(d)
+                if k.startswith(ivy_starter) and os.path.isfile(os.path.join(d,k))
+            )
+        return available_modules
+
+    def list_available_publications(self, org, module, version):
+        raise Exception("Unimplemented")
+
+    def get_ivy_file(self, org, module, version):
+        """
+            ignores org
+        """
+        #FIXME The could not find module case is not very correct
+        parser = artifactory_parser()
+        last_exception = None
+        for d in self.directory_list:
+            filename = os.path.join(d, "ivy-" + module + "-" + version + ".xml")
+            if os.path.exists(filename):
+                return open(filename).read()
         raise Exception( "Couldn't find ivy file with last error being \'" + last_exception + "\'" )
