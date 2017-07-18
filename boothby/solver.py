@@ -3,13 +3,9 @@ from ivy_module import ivy_module
 import logging
 from IPython.core.debugger import Tracer
 
-# let's assume for now, I've been given a file
-
-
-def pkey(mod):
-    return mod.org + "/" + mod.name
-
-
+"""
+    TODO: This section on constraints needs work
+"""
 # X.Y.Z
 # X.Y.Z_N
 # This regex, only matches fixed revisions of the above format
@@ -29,6 +25,10 @@ def make_constraint_functor(constraint):
         return lambda k : k == constraint
     else:
         raise Exception("Unsupported constraint \'" + constraint + "\'")
+
+"""
+    TODO: graph_module is a terrible name
+"""
 
 # we make our nodes in the graph classes
 # such that they can yield specific versions
