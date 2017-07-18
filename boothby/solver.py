@@ -22,6 +22,34 @@ def rev_fixed(mod):
         (c in chars) for c in "[]()+*"
     )
 
+node_properties = {
+    id : org + "/" + module_name,
+    version: "",
+    url : "",
+    configurations :
+}
+
+# we make our nodes in the graph classes
+# such that they can yield specific versions
+class graph_module(object):
+    id = "com.tmvse.vis/Origami"
+    available_versions = {
+        "version" : "ivy_module"
+    }
+    # we can't ... unfortunately put configurations in here
+    # .... because .... well ... the configurations can change over time
+    def __init__(self, org, module, nav):
+        self.id = org + "/" + module
+        self.org = org
+        self.module = module
+        # initialize all our versions with nothing, so that
+        # we know to initialize later
+        self.all_versions = {
+            x : None for x in nav.get_available_versions(org, module)
+        }
+
+    def versions(self):
+        return self.all_versions.keys()
 
 def build_initial_graph(filename, nav):
     root_module = ivy_module.from_file(filename)

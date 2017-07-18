@@ -1,3 +1,4 @@
+
 import requests
 from urlparse import urljoin
 import abc
@@ -57,31 +58,53 @@ class artifactory_navigator(navigator):
             self.auth = refresh_auth(DEFAULT_PASS_MSG, False)
         else:
             self.auth = auth
+        self.module_map = {}
+
+
+    def __get_with_401_retry(self, url):
+        response = requests.get(
+            url,
+            auth = self.auth
+        )
+        if response.status_code == 401:
+            self.auth = refresh_auth( error_pass_msg( response.status_code ) )
+            response = requests.get(
+                url,
+                auth = self.auth
+            )
+            # just throw, if still error
+            response.raise_for_status()
+        return response
+
+    def __ivy_url_factory(self, repo, org, module, version):
+        return urljoin(repo, org) + "/" + module + "/" + version + "/ivy-" + version + ".xml"
 
     def list_available_versions(self, org, module):
         parser = artifactory_parser()
         available_versions = []
         for repo in self.repository_list:
-            response = requests.get(urljoin(repo, org) + "/" + module, auth = self.auth)
-            if response.status_code == 401:
-                self.auth = refresh_auth( error_pass_msg( response.status_code ) )
-                response = requests.get(urljoin(repo, org) + "/" + module, auth = self.auth)
-                # just throw, if still error
-                response.raise_for_status()
-
-            available_versions.extend(parser.parse_versions(response.text))
+            response = self.__get_with_401_retry(
+                urljoin(repo, org) + "/" + module
+            )
+            # success!
+            versions_in_repo = parser.parse_versions(response.text)
+            for ver in versions_in_repo:
+                self.module_map[ (org, module, version) ]= self.__ivy_url_factory(
+                    repo,
+                    org,
+                    module,
+                    ver
+                )
+            available_versions.extend(versions_in_repo)
         return available_versions
 
     def list_available_modules(self, org):
         parser = artifactory_parser()
         available_modules = []
         for repo in self.repository_list:
-            response = requests.get(urljoin(repo, org), auth = self.auth)
-            if response.status_code == 401:
-                self.auth = refresh_auth( error_pass_msg( response.status_code ) )
-                response = requests.get(urljoin(repo, org), auth = self.auth)
-                # just throw, if still error
-                response.raise_for_status()
+            response = self.__get_with_401_retry(
+                urljoin(repo, org)
+            )
             available_modules.extend(parser.parse_modules(response.text))
         return available_modules
 
@@ -90,27 +113,23 @@ class artifactory_navigator(navigator):
         last_exception = None
         pubs = []
         for repo in self.repository_list:
-            response = requests.get(urljoin(repo, org) + "/" + module + "/" + version, auth = self.auth)
-            if response.status_code == 401:
-                self.auth = refresh_auth( error_pass_msg( response.status_code ) )
-                response = requests.get(urljoin(repo, org) + "/" + module + "/" + version, auth = self.auth)
-                # just throw, if still error
-                response.raise_for_status()
-            pubs.extend(parser.parse_links( response.text ))
+            response = self.__get_with_401_retry(
+                urljoin(repo, org) + "/" + module + "/" + version
+            )
+            pubs.extend(parser.parse_links(response.text))
         return pubs
 
     def get_ivy_file(self, org, module, version):
         #FIXME The could not find module case is not very correct
         parser = artifactory_parser()
         last_exception = None
+        if (org, module, version) in self.module_map:
+            return self.__get_ivy_file( self.module_map[ (org, module, version) ] )
         for repo in self.repository_list:
             try:
-                response = requests.get(urljoin(repo, org) + "/" + module + "/" + version + "/ivy-" + version + ".xml", auth = self.auth)
-                if response.status_code == 401:
-                    self.auth = refresh_auth( error_pass_msg( response.status_code ) )
-                    response = requests.get(urljoin(repo, org) + "/" + module + "/" + version + "/ivy-" + version + ".xml", auth = self.auth)
-                    # just throw, if still error
-                    response.raise_for_status()
+                ivy_url = self.__ivy_url_factory(repo, org, module, version)
+                response = self.__get_with_401_retry( ivy_url )
+                response.raise_for_status()
                 return response.text
             except Exception as e:
                 last_exception = e
@@ -130,6 +149,9 @@ class fileset_navigator(navigator):
         # so we're going to lie a bit right now,
         # because the set of ivy files I have, has the module in the filename,
         # but not the org
+        logging.warning(
+            "fileset_navigator.list_available_versions ignores provided org"
+        )
         available_versions = []
         sw = "ivy-" + module + "-"
         for d in self.directory_list:
@@ -143,10 +165,14 @@ class fileset_navigator(navigator):
             ])
         return available_versions
 
-    def list_available_modules(self, org):
+    def list_available_modules(self, org = None):
         """
             ignores org
         """
+        logging.warning(
+            "fileset_navigator.list_available_modules ignores provided org"
+        )
+
         available_modules = set()
         ivy_starter = "ivy-"
         for d in self.directory_list:
@@ -167,6 +193,9 @@ class fileset_navigator(navigator):
         """
             ignores org
         """
+        logging.warning(
+            "fileset_navigator.get_ivy_file ignores provided org"
+        )
         #FIXME The could not find module case is not very correct
         parser = artifactory_parser()
         last_exception = None
