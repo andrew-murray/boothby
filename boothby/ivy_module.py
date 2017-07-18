@@ -63,6 +63,9 @@ class conf(object):
             node.get("deprecated")
         )
 
+    def __str__(self):
+        return str( self.__dict__ )
+
 
 """
 http://ant.apache.org/ivy/history/2.0.0/ivyfile/dependency.html
@@ -173,6 +176,8 @@ class dependency(object):
             node.get("changing")
         )
 
+    def __str__(self):
+        return str( self.__dict__ )
 
 """
 http://ant.apache.org/ivy/history/2.0.0/ivyfile/artifact.html
@@ -231,6 +236,8 @@ class artifact(object):
             node.get("url")
         )
 
+    def __str__(self):
+        return str( self.__dict__ )
 
 def parse_info(node):
     info = AttrDict({
@@ -281,3 +288,6 @@ class ivy_module(object):
     def from_file(filename):
         tree = ET.parse(filename)
         return ivy_module.from_element_tree(tree.getroot())
+
+    def __str__(self):
+        return str( self.__dict__ )

@@ -1,4 +1,4 @@
-
+import logging
 import requests
 from urlparse import urljoin
 import abc
