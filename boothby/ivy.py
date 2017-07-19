@@ -249,7 +249,7 @@ def parse_info(node):
     return info + node.attrib
 
 
-class ivy_module(object):
+class module_descriptor(object):
     @staticmethod
     def from_element_tree(root):
         info = parse_info(root.find("info"))
@@ -282,12 +282,12 @@ class ivy_module(object):
     @staticmethod
     def from_string(text):
         tree = ET.fromstring(text)
-        return ivy_module.from_element_tree(tree)
+        return module_descriptor.from_element_tree(tree)
 
     @staticmethod
     def from_file(filename):
         tree = ET.parse(filename)
-        return ivy_module.from_element_tree(tree.getroot())
+        return module_descriptor.from_element_tree(tree.getroot())
 
     def __str__(self):
         return str( self.__dict__ )

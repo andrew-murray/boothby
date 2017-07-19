@@ -1,7 +1,6 @@
 import re
-from ivy_module import ivy_module
+from ivy import module_descriptor
 import logging
-from IPython.core.debugger import Tracer
 
 """
     TODO: This section on constraints needs work
@@ -26,13 +25,10 @@ def make_constraint_functor(constraint):
     else:
         raise Exception("Unsupported constraint \'" + constraint + "\'")
 
-"""
-    TODO: graph_module is a terrible name
-"""
 
 # we make our nodes in the graph classes
 # such that they can yield specific versions
-class graph_module(object):
+class module(object):
     # we can't ... unfortunately put configurations in here
     # .... because .... well ... the configurations can change over time
     def __init__(self, org, module, nav):
@@ -80,37 +76,37 @@ class graph_module(object):
     def get_latest_module():
         version_to_module = self.constrained_versions.iteritems()[-1]
         if version_to_module[1] is None:
-            version_to_module[1] = nav.get_ivy_module(self.org,self.module, version_to_module[0])
+            version_to_module[1] = nav.get_module_descriptor(self.org,self.module, version_to_module[0])
         return version_to_module[1]
 
     def get(self, version):
         if self.all_versions[version] is None:
-            self.all_versions[version] = ivy_module.from_string(self.nav.get_ivy_file(
+            self.all_versions[version] = module_descriptor.from_string(self.nav.get_ivy_file(
                 self.org,
                 self.module,
                 version
             ))
         return self.all_versions[version]
 
-def build_initial_graph_from_module(nav, module, graph_modules):
+def build_initial_graph_from_module(nav, module, modules):
     # module.revConstraint = module.rev
     for dep in module.dependencies:
         dep_id = dep.org + "/" + dep.name
         print dep_id
-        if dep_id not in graph_modules:
-            graph_modules[dep_id] = graph_module(dep.org, dep.name, nav)
+        if dep_id not in modules:
+            modules[dep_id] = module(dep.org, dep.name, nav)
 
-        graph_modules[dep_id].add_constraint(dep.rev)
-        satisfied_versions = graph_modules[dep_id].satisfied_versions(dep.rev)
+        modules[dep_id].add_constraint(dep.rev)
+        satisfied_versions = modules[dep_id].satisfied_versions(dep.rev)
         while(satisfied_versions):
             best_candidate = satisfied_versions[-1]
             print "candidate : " + dep_id + " " + best_candidate
             try:
-                best_module = graph_modules[dep_id].get(best_candidate)
+                best_module = modules[dep_id].get(best_candidate)
                 build_initial_graph_from_module(
                     nav,
                     best_module,
-                    graph_modules
+                    modules
                 )
                 break
             except Exception as e:
@@ -121,7 +117,7 @@ def build_initial_graph_from_module(nav, module, graph_modules):
             raise Exception(
                 "Exhausted all satisfied versions when building initial graph "
                 + " for \'" + dep_id + "\'. Tried versions:\n"
-                + "\n".join(graph_modules[dep_id].versions())
+                + "\n".join(modules[dep_id].versions())
             )
         else:
             # everything went okay
@@ -129,10 +125,10 @@ def build_initial_graph_from_module(nav, module, graph_modules):
         print dep_id + " suggested as " + best_candidate
 
 def build_initial_graph(filename, nav):
-    root = ivy_module.from_file(filename)
-    root_graph_module = graph_module( root.info.organisation, root.info.module, nav )
+    root = module_descriptor.from_file(filename)
+    root_module = module( root.info.organisation, root.info.module, nav )
     return build_initial_graph_from_module(
         nav,
         root,
-        {root_graph_module.id : root_graph_module}
+        {root_module.id : root_module}
     )
