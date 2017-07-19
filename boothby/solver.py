@@ -31,14 +31,14 @@ def make_constraint_functor(constraint):
 class module(object):
     # we can't ... unfortunately put configurations in here
     # .... because .... well ... the configurations can change over time
-    def __init__(self, org, module, nav):
-        self.id = org + "/" + module
+    def __init__(self, org, name, nav):
+        self.id = org + "/" + name
         self.org = org
-        self.module = module
+        self.name = name
         # initialize all our versions with nothing, so that
         # we know to initialize later
         self.all_versions = {
-            x : None for x in nav.list_available_versions(org, module)
+            x : None for x in nav.list_available_versions(org, name)
         }
 
         self.constrained_versions = list( self.all_versions.keys() )
@@ -76,21 +76,21 @@ class module(object):
     def get_latest_module():
         version_to_module = self.constrained_versions.iteritems()[-1]
         if version_to_module[1] is None:
-            version_to_module[1] = nav.get_module_descriptor(self.org,self.module, version_to_module[0])
+            version_to_module[1] = nav.get_module_descriptor(self.org,self.name, version_to_module[0])
         return version_to_module[1]
 
     def get(self, version):
         if self.all_versions[version] is None:
             self.all_versions[version] = module_descriptor.from_string(self.nav.get_ivy_file(
                 self.org,
-                self.module,
+                self.name,
                 version
             ))
         return self.all_versions[version]
 
-def build_initial_graph_from_module(nav, module, modules):
+def build_initial_graph_from_module(nav, root_module, modules):
     # module.revConstraint = module.rev
-    for dep in module.dependencies:
+    for dep in root_module.dependencies:
         dep_id = dep.org + "/" + dep.name
         print dep_id
         if dep_id not in modules:
@@ -100,7 +100,7 @@ def build_initial_graph_from_module(nav, module, modules):
         satisfied_versions = modules[dep_id].satisfied_versions(dep.rev)
         while(satisfied_versions):
             best_candidate = satisfied_versions[-1]
-            print "candidate : " + dep_id + " " + best_candidate
+            # print "candidate : " + dep_id + " " + best_candidate
             try:
                 best_module = modules[dep_id].get(best_candidate)
                 build_initial_graph_from_module(
@@ -122,13 +122,15 @@ def build_initial_graph_from_module(nav, module, modules):
         else:
             # everything went okay
             pass
-        print dep_id + " suggested as " + best_candidate
+        # print dep_id + " suggested as " + best_candidate
 
 def build_initial_graph(filename, nav):
     root = module_descriptor.from_file(filename)
     root_module = module( root.info.organisation, root.info.module, nav )
-    return build_initial_graph_from_module(
+    modules = {root_module.id : root_module}
+    build_initial_graph_from_module(
         nav,
         root,
-        {root_module.id : root_module}
+        modules
     )
+    return modules
