@@ -6,8 +6,8 @@ import re
     contains details of what is supported.
 
     Notes in order of precedence that I should address
-    1) * is nonsense
-    2) + is only supported as a terminator [prefix]+
+    X) * is nonsense
+    X) + is only supported as a terminator [prefix]+
     3) While I don't support version ranges right now
        - [1.0,2.0]
        - ]1.0,2.0[
@@ -23,13 +23,6 @@ import re
     And 4/5 I will probably never support.
     I think this understanding justifies a rewrite of this code.
 """
-# X.Y.Z
-# X.Y.Z_N
-# This regex, only matches fixed revisions of the above format
-# .... how do you turn it into a regex which also matches
-# supported dynamic revisions?
-ivy_regex = re.compile(r"^([0-9]+\.)+[0-9]+(?:_[0-9]+)?$")
-
 def contains_dynamic_characters(mod):
     return any(
         (c in mod) for c in "[]()+"
@@ -45,20 +38,6 @@ def is_fixed(mod):
     #  revisions in ivy
     return not bool(contains_dynamic_characters(mod))
 
-# todo remove this
-# this regex matches sequences like a.b.c_x
-# but I don't think I need such a thing
-"""
-def map_version(version):
-    if contains_dynamic_characters(version):
-        return "([0-9]+)(?:(\.[0-9]+)+)?(?:_[0-9]+)?"
-    else:
-        return version
-
-def map_version_sequence(constraint):
-    regex_versions = [ map_version(x) for x in version_numbers ]
-    return "^" + "\.".join(regex_versions) + "$"
-"""
 def make_constraint_regex(constraint):
     if contains_unsupported_dynamic_characters(constraint):
         raise Exception(
