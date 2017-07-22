@@ -2,3 +2,6 @@ attrdict
 bs4
 keyring
 requests
+networkx
+matplotlib
+pydotplus
