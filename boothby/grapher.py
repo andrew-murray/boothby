@@ -1,7 +1,7 @@
 import re
 from ivy import module_descriptor
 import logging
-import solver
+import revision_constraint
 import networkx as nx
 import matplotlib.pyplot as plt
 
@@ -18,7 +18,7 @@ def collect_graph_from_initial_graph(modules):
                 # if we have a fixed dep here,
                 # let's put it straight in the graph
                 # don't know how to manage non-fixed yet
-                if solver.rev_fixed(dep.rev):
+                if revision_constraint.is_fixed(dep.rev):
                     dep_id = dep.org + "/" + dep.name + "/" + dep.rev
                     g.add_node( dep_id )
                     g.add_edge( version_id, dep_id )
