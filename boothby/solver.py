@@ -1,30 +1,6 @@
-import re
 from ivy import module_descriptor
 import logging
-
-"""
-    TODO: This section on constraints needs work
-"""
-# X.Y.Z
-# X.Y.Z_N
-# This regex, only matches fixed revisions of the above format
-# .... how do you turn it into a regex which also matches
-# supported dynamic revisions?
-ivy_regex = re.compile(r"^([0-9]+\.)+[0-9]+(?:_[0-9]+)?$")
-
-def rev_fixed(mod):
-    # the characters being checked, are those associated with dynamic
-    #  revisions in ivy
-    return ivy_regex.match(mod) or not any(
-        (c in mod) for c in "[]()+*"
-    )
-
-def make_constraint_functor(constraint):
-    if rev_fixed(constraint):
-        return lambda k : k == constraint
-    else:
-        raise Exception("Unsupported constraint \'" + constraint + "\'")
-
+import revision_constraint
 
 # we make our nodes in the graph classes
 # such that they can yield specific versions
@@ -57,7 +33,9 @@ class module(object):
                 self.constrained_versions.append( k )
 
     def add_constraint(self, constraint):
-        self.constraints[ constraint ] = make_constraint_functor( constraint )
+        self.constraints[ constraint ] = revision_constraint.make_constraint_functor(
+            constraint
+        )
         self.refresh_constrained_versions()
 
     def remove_constraint(self, constraint):
@@ -66,7 +44,7 @@ class module(object):
 
     def satisfied_versions(self, constraint):
         if type(constraint) is str:
-            c = make_constraint_functor(constraint)
+            c = revision_constraint.make_constraint_functor(constraint)
         else:
             c = constraint
         return [
@@ -76,16 +54,22 @@ class module(object):
     def get_latest_module():
         version_to_module = self.constrained_versions.iteritems()[-1]
         if version_to_module[1] is None:
-            version_to_module[1] = nav.get_module_descriptor(self.org,self.name, version_to_module[0])
+            version_to_module[1] = nav.get_module_descriptor(
+                self.org,
+                self.name,
+                version_to_module[0]
+            )
         return version_to_module[1]
 
     def get(self, version):
         if self.all_versions[version] is None:
-            self.all_versions[version] = module_descriptor.from_string(self.nav.get_ivy_file(
-                self.org,
-                self.name,
-                version
-            ))
+            self.all_versions[version] = module_descriptor.from_string(
+                self.nav.get_ivy_file(
+                    self.org,
+                    self.name,
+                    version
+                )
+            )
         return self.all_versions[version]
 
 def build_initial_graph_from_module(nav, root_module, modules):
