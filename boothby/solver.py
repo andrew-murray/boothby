@@ -1,6 +1,8 @@
 from ivy import module_descriptor
 import logging
 import revision_constraint
+import networkx as nx
+from IPython.core.debugger import Tracer
 
 # we make our nodes in the graph classes
 # such that they can yield specific versions
@@ -118,3 +120,43 @@ def build_initial_graph(filename, nav):
         modules
     )
     return modules
+
+def rough_module_graph(modules):
+    g = nx.DiGraph()
+    for m in modules.values():
+        module_id = m.id
+        all_versions = m.versions()
+        ver = all_versions[-1]
+        desc = m.get( ver )
+        g.add_node( module_id )
+        for dep in desc.dependencies:
+            dep_id = dep.org + "/" + dep.name
+            g.add_node( dep_id )
+            g.add_edge( module_id, dep_id )
+    return g
+
+def collect_graph_from_initial_graph(modules):
+    g = nx.DiGraph()
+    for m in modules.values():
+        module_id = m.id
+        all_versions = m.versions()
+        for ver in all_versions:
+            version_id = module_id + "/" + ver
+            desc = m.get( ver )
+            g.add_node( version_id, desc )
+            for dep in desc.dependencies:
+                # if we have a fixed dep here,
+                # let's put it straight in the graph
+                # don't know how to manage non-fixed yet
+                if revision_constraint.is_fixed(dep.rev):
+                    dep_id = dep.org + "/" + dep.name + "/" + dep.rev
+                    g.add_node( dep_id )
+                    g.add_edge( version_id, dep_id )
+    return g
+
+def collect_graph(filename, nav):
+    modules = build_initial_graph(filename, nav)
+    return collect_graph_from_initial_graph( modules )
+
+def canonical(g):
+    return nx.topological_sort(g)

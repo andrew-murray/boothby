@@ -1,4 +1,5 @@
 import logging
+import warnings
 import requests
 from urlparse import urljoin
 import abc
@@ -149,7 +150,7 @@ class fileset_navigator(navigator):
         # so we're going to lie a bit right now,
         # because the set of ivy files I have, has the module in the filename,
         # but not the org
-        logging.warning(
+        warnings.warn(
             "fileset_navigator.list_available_versions ignores provided org"
         )
         available_versions = []
@@ -169,7 +170,7 @@ class fileset_navigator(navigator):
         """
             ignores org
         """
-        logging.warning(
+        warnings.warn(
             "fileset_navigator.list_available_modules ignores provided org"
         )
 
@@ -193,7 +194,7 @@ class fileset_navigator(navigator):
         """
             ignores org
         """
-        logging.warning(
+        warnings.warn(
             "fileset_navigator.get_ivy_file ignores provided org"
         )
         #FIXME The could not find module case is not very correct

@@ -1,6 +1,7 @@
 import xml.etree.ElementTree as ET
 from attrdict import AttrDict
 import logging
+import warnings
 
 
 def else_default(x, y):
@@ -158,7 +159,7 @@ class dependency(object):
         includes = list(node.findall("include"))
         excludes = list(node.findall("exclude"))
         if artifacts or includes or excludes:
-            logging.warning(
+            warnings.warn(
                 "ira does not support artifact declarations "
                 "inside dependencies. <artifact>, <include> and <exclude> "
                 "will be ignored in this context."
