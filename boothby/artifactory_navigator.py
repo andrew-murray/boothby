@@ -235,6 +235,7 @@ def cached_artifactory_parser(navigator):
     def list_available_modules(self, org = None):
         return self.art.list_available_modules(org)
     def get_ivy_file(self, org, module, version):
+        # TODO: Handle changing
         if not self.local.contains(org,module,version):
             module_file = self.art.get_ivy_file(org,module,version)
             self.local.store_ivy_file(org,module,version,module_file)
