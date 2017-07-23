@@ -140,8 +140,22 @@ class artifactory_navigator(navigator):
 
 class fileset_navigator(navigator):
 
-    def __init__(self, directory_list):
-        self.directory_list = directory_list
+    def __init__(self, directory_or_function):
+        if type(directory_or_function) is str:
+            self.directory = directory_or_function
+        else:
+            self.custom_path_former = directory_or_function
+
+    def path_to_ivy(self,org,module,ver):
+        return os.path.join(
+            self.directory,
+            "ivy-" + module + "-" + version + ".xml"
+        )
+
+    def contains(self,org,module,ver):
+        return os.path.exists(
+            self.path_to_ivy(org,module,ver)
+        )
 
     def list_available_versions(self, org, module):
         """
@@ -155,15 +169,14 @@ class fileset_navigator(navigator):
         )
         available_versions = []
         sw = "ivy-" + module + "-"
-        for d in self.directory_list:
-            # ivy-module-ver.xml
-            # we presume our version has no dashes,
-            # though it's fine in the module
-            available_versions.extend([
-                os.path.splitext(k)[0].split("-")[-1]
-                for k in os.listdir(d)
-                if k.startswith(sw) and os.path.isfile(os.path.join(d,k))
-            ])
+        # ivy-module-ver.xml
+        # we presume our version has no dashes,
+        # though it's fine in the module
+        available_versions.extend([
+            os.path.splitext(k)[0].split("-")[-1]
+            for k in os.listdir(self.directory)
+            if k.startswith(sw) and os.path.isfile(os.path.join(d,k))
+        ])
         return available_versions
 
     def list_available_modules(self, org = None):
@@ -176,15 +189,14 @@ class fileset_navigator(navigator):
 
         available_modules = set()
         ivy_starter = "ivy-"
-        for d in self.directory_list:
-            all_things = os.listdir(d)
-            available_modules.update(
-                # this syntax is necessary, because the module can have
-                # dashes, but we disallow it in the version
-                "-".join( os.path.splitext(k)[0].split("-")[1:-1] )
-                for k in os.listdir(d)
-                if k.startswith(ivy_starter) and os.path.isfile(os.path.join(d,k))
-            )
+        all_things = os.listdir(d)
+        available_modules.update(
+            # this syntax is necessary, because the module can have
+            # dashes, but we disallow it in the version
+            "-".join( os.path.splitext(k)[0].split("-")[1:-1] )
+            for k in os.listdir(self.directory)
+            if k.startswith(ivy_starter) and os.path.isfile(os.path.join(d,k))
+        )
         return available_modules
 
     def list_available_publications(self, org, module, version):
@@ -198,10 +210,32 @@ class fileset_navigator(navigator):
             "fileset_navigator.get_ivy_file ignores provided org"
         )
         #FIXME The could not find module case is not very correct
-        parser = artifactory_parser()
-        last_exception = None
-        for d in self.directory_list:
-            filename = os.path.join(d, "ivy-" + module + "-" + version + ".xml")
-            if os.path.exists(filename):
-                return open(filename).read()
-        raise Exception( "Couldn't find ivy file with last error being \'" + last_exception + "\'" )
+        filename = path_to_ivy(org, module, version)
+        if os.path.exists(filename):
+            return open(filename).read()
+        raise Exception( "Couldn't find ivy file \'" + filename + "\'." )
+
+    def store_ivy_file(self,org,module,version,mod):
+        """
+            ignores org
+        """
+        warnings.warn(
+            "fileset_navigator.get_ivy_file ignores provided org"
+        )
+        filename = path_to_ivy(org, module, version)
+        with open(filename,'w') as op:
+            op.write(mod)
+
+def cached_artifactory_parser(navigator):
+    def __init__(self, directory, repository_list):
+        self.local = fileset_navigator(directory)
+        self.art = artifactory_navigator(repository_list)
+    def list_available_versions(self, org, module):
+        return self.art.list_available_versions(org,module)
+    def list_available_modules(self, org = None):
+        return self.art.list_available_modules(org)
+    def get_ivy_file(self, org, module, version):
+        if not self.local.contains(org,module,version):
+            module_file = self.art.get_ivy_file(org,module,version)
+            self.local.store_ivy_file(org,module,version,module_file)
+        return self.local.get_ivy_file(org,module,version)
